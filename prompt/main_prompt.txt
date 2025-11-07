@@ -1,0 +1,2 @@
+user question: {user_question}
+context to answer the question: {context}
