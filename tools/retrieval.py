@@ -16,6 +16,7 @@ class retriving:
         self.embeddings = HuggingFaceEmbeddings(model_name=self.embedding_model)
         self.namespace = namespace
         self.db = None  # Initialize db as None
+        self._load_db_if_exists()
 
     def _namespace_path(self) -> Path:
         path = self.persist_root / self.namespace
@@ -27,6 +28,15 @@ class retriving:
         exists = (ns_path / "index.faiss").exists() and (ns_path / "index.pkl").exists()
         logger.info(f"Checking if store exists at {ns_path}: {exists}")
         return exists
+
+    def _load_db_if_exists(self):
+        ns_path = self._namespace_path()
+        if self._store_exists(ns_path):
+            self.db = self._load_db()
+
+    def reload_db(self):
+        logger.info("Reloading vector store.")
+        self._load_db_if_exists()
 
     def _load_db(self):
         # Call this AFTER verifying the vectorstore exists!
@@ -42,12 +52,9 @@ class retriving:
 
     def retrive_relevant_context(self, user_query: str, k: int = 5):
         logger.info(f"Retrieving relevant context for query: {user_query}")
-        ns_path = self._namespace_path()
-        if not self._store_exists(ns_path):
+        if not self.db:
             logger.error(f"Vector store not found for namespace: {self.namespace}")
             raise FileNotFoundError(f"Vector store not found for namespace: {self.namespace}")
-
-        self.db = self._load_db()  # Load the db on demand
 
         results = self.db.similarity_search(user_query, k=k)
         logger.info(f"Found {len(results)} relevant documents.")

@@ -28,6 +28,7 @@ async def upload(
             filename=file.filename,
             namespace=namespace,
         )
+        response_generator.reload_retriever_db()  # Reload the vector store
         logger.info(f"File uploaded and ingested successfully: {file.filename}")
         return JSONResponse(result)
     except Exception as e:
@@ -38,8 +39,7 @@ async def upload(
 async def query(user_query: str = Body(..., embed=True)):
     logger.info(f"Received query: {user_query}")
     try:
-        prompt_path = "prompt/main_prompt.txt"
-        response = response_generator.query_response(user_query, prompt_path)
+        response = response_generator.query_response(user_query)
         logger.info(f"Generated response for query: {user_query}")
         return JSONResponse({"response": response})
     except Exception as e:

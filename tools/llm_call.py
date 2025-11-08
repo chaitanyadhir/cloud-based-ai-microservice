@@ -4,22 +4,21 @@ from dotenv import load_dotenv
 from loguru import logger
 
 class llm_api_call:
-    def __init__(self, google_api_key=None, model_name="models/gemini-2.0-flash"):
+    def __init__(self, google_api_key=None, model_name="models/gemini-2.5-flash-lite"):
         """
         Initializes the Gemini API client.
         If no API key is provided, it will be auto-loaded from the .env file or environment.
         """
         logger.info(f"Initializing llm_api_call with model: {model_name}")
         self.model = model_name
-        self.api_key = google_api_key  # May be None initially
+        self.api_key = google_api_key
+        self._load_api_key()
 
     def _load_api_key(self):
         """Ensures the API key is loaded from .env or environment."""
-        logger.info("Loading API key.")
-        # Load .env silently each time to catch any updated keys
-        load_dotenv(override=False)
-
         if not self.api_key:
+            logger.info("Loading API key.")
+            load_dotenv(override=False)
             self.api_key = os.getenv("GOOGLE_API_KEY")
 
         if not self.api_key:
@@ -30,13 +29,9 @@ class llm_api_call:
     def generate(self, prompt: str) -> str:
         """
         Calls Google Gemini API to generate a response for the given prompt.
-        Automatically loads API key if not already available.
         """
         logger.info("Generating response from LLM.")
         try:
-            # Ensure key is loaded before making request
-            self._load_api_key()
-
             url = f"https://generativelanguage.googleapis.com/v1/{self.model}:generateContent"
             headers = {"Content-Type": "application/json"}
             params = {"key": self.api_key}

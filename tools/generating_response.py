@@ -1,29 +1,40 @@
 from .retrieval import retriving
 from .llm_call import llm_api_call
 from loguru import logger
+import functools
 
 class response_generate:
-    def __init__(self, namespace: str = "default"):
+    def __init__(self, namespace: str = "default", prompt_path: str = "prompt/main_prompt.txt"):
         logger.info(f"Initializing response_generate with namespace: {namespace}")
-        # Simplified: Use defaults for persist_root and embedding_model
         self.retriever = retriving(namespace=namespace)
-        self.llm_caller = llm_api_call()  # Use default API key/model handling
+        self.llm_caller = llm_api_call()
+        self.prompt_template = self._load_prompt_template(prompt_path)
+        self.cache = {}
 
-    def query_response(self, user_query: str, prompt_path: str) -> str:
-        logger.info(f"Generating response for query: {user_query}")
-        # Get relevant context from retriever
-        context_docs = self.retriever.retrive_relevant_context(user_query)
-        # Join context texts
-        context = "\n".join([doc.page_content if hasattr(doc, 'page_content') else str(doc) for doc in context_docs])
-
-        # Read and format the prompt template
+    def _load_prompt_template(self, prompt_path: str) -> str:
+        logger.info(f"Loading prompt template from {prompt_path}")
         with open(prompt_path, 'r') as f:
-            prompt_template = f.read()
-        formatted_prompt = prompt_template.format(user_question=user_query, context=context)
+            return f.read()
 
-        # Call the LLM
+    def reload_retriever_db(self):
+        logger.info("Reloading retriever database.")
+        self.retriever.reload_db()
+
+    def query_response(self, user_query: str) -> str:
+        logger.info(f"Generating response for query: {user_query}")
+
+        if user_query in self.cache:
+            logger.info("Returning cached response.")
+            return self.cache[user_query]
+
+        context_docs = self.retriever.retrive_relevant_context(user_query)
+        context = "\n".join([doc.page_content if hasattr(doc, 'page_content') else str(doc) for doc in context_docs])
+        formatted_prompt = self.prompt_template.format(user_question=user_query, context=context)
+
         response = self.llm_caller.generate(formatted_prompt)
-        logger.info("Successfully generated response.")
+        
+        self.cache[user_query] = response
+        logger.info("Successfully generated and cached response.")
         return response
 
 # if __name__ == '__main__':
