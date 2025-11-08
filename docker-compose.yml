@@ -1,30 +1,19 @@
-version: '3.8'
-
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: my-ai-backend
+  app:
+    build: .
+    container_name: ai_app
+    # Starts both FastAPI (8000) and Streamlit (8501) using your CMD
+    command: >
+      sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 &
+             streamlit run app.py --server.port 8501 --server.address 0.0.0.0"
     ports:
       - "8000:8000"
-    networks:
-      - ai_service_network
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: my-ai-frontend
-    ports:
       - "8501:8501"
-    environment:
-      - FASTAPI_URL=http://backend:8000
-    depends_on:
-      - backend
-    networks:
-      - ai_service_network
-
-networks:
-  ai_service_network:
-    driver: bridge
+    env_file:
+      - .env  # optional if you want to keep secrets/config here
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
