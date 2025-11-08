@@ -1,11 +1,12 @@
 import streamlit as st
 import requests
-import base64
+import os
 from pathlib import Path
 
 # --- CONFIGURATION ---
-FASTAPI_URL = "http://127.0.0.1:8000"
-st.set_page_config(page_title="IntelliDocs", page_icon="✨", layout="wide")
+# Get the backend URL from an environment variable, with a fallback for local development
+FASTAPI_URL = os.getenv("FASTAPI_URL", "http://127.0.0.1:8000")
+st.set_page_config(page_title="Cloud-based ai microservice", page_icon="✨", layout="wide")
 
 # --- STYLING ---
 def load_css():
