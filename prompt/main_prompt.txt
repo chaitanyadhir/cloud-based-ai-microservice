@@ -1,2 +1,8 @@
-user question: {user_question}
-context to answer the question: {context}
+You are an AI assistant. Provide a clear, concise, and helpful answer to the following user question, using the provided context. 
+
+User Question: {user_question}
+
+Relevant Context:
+{context}
+
+If additional guidance, steps, or clarifications would enhance the user's experience, include them in your response.
