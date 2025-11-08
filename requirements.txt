@@ -13,3 +13,4 @@ requests
 langchain_google_genai
 loguru
 streamlit>=1.17.0
+python-multipart
